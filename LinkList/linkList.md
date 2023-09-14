@@ -397,3 +397,81 @@ public:
 };
 ```
 
+#### 7、环形链表
+
+**常规解法**
+
+* 使用一个vector数组记录遍历过程中的指针
+
+* 循环的过程中判断当前节点是否在vector数组中，是则返回当前节点，否则将当前节点加入vector数组
+
+  ```cpp
+  class Solution {
+  public:
+      vector<ListNode*> vec;
+      ListNode *detectCycle(ListNode *head) {
+          if(head==NULL) return head;
+          //vec.push_back(head);
+          ListNode* cur = head;
+          while(cur!=NULL){
+              if(find(vec.begin(),vec.end(),cur)!=vec.end())
+              {
+                  return cur;
+              }else{
+                  vec.push_back(cur);
+                  cur = cur->next;
+              }
+          }
+          return NULL;
+      }
+  };
+  ```
+
+  
+
+**快慢指针解法**
+
+* 设两指针指向head节点
+
+* 令fast指针每轮走两步，slow指针每轮走一步
+
+* 存在循环，fast指针在循环中一定会与slow相遇
+
+* 设链表长度为a+b，a:环外，b:环内，慢指针走过的路径长为s,快指针为f
+
+* `f = 2s,s = nb,f = 2nb`
+
+* `f-s = nb`即`f=2nb，s=nb`
+
+* 第一次相遇，快指针比慢指针多走圈的n倍
+
+* 如果让指针从链表头部一直向前走并统计步数k，**那么所有 走到链表入口节点时的步数** 是：`k=a+nb`，即先走 `a` 步到入口节点，之后每绕 1 圈环（ `b` 步）都会再次到入口节点。而目前 slow 指针走了`nb` 步。因此，我们只要想办法让 slow 再走 `a` 步停下来，就可以到环的入口。
+
+  
+
+  
+
+```cpp
+class Solution {
+public:
+    vector<ListNode*> vec;
+    ListNode *detectCycle(ListNode *head) {
+        ListNode* fast = head;
+        ListNode* slow = head;
+        while (true) {
+            if (fast == nullptr || fast->next == nullptr) return nullptr;
+            fast = fast->next->next;
+            slow = slow->next;
+            if (fast == slow) break;
+        }
+        fast = head;
+        while (slow != fast) {
+            slow = slow->next;
+            fast = fast->next;
+        }
+        return fast;
+    }
+
+};
+```
+
