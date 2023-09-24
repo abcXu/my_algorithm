@@ -242,6 +242,88 @@ public:
 };
 ```
 
+#### 5、车队
+
+**思路**
+
+* 求出每个位置的车子到达终点需要的时间，并建立一个位置到时间的map，注意时间是float
+* 按照位置进行升序排序
+* 利用单调栈思路进行求解
+* 两量行驶在单行道上的车是否相遇关键是看，距离远的车是否用时更短
+* 最后留在栈里的车子数量就是车队数目，因为他们的右边（position大）但是用时快
+
+```cpp
+class Solution {
+public:
+    int carFleet(int target, vector<int>& position, vector<int>& speed) {
+        // 距离目的地远用时短的和近的用时长的会形成车队
+        int n = position.size();
+        float time[n];
+        unordered_map<int,float> mp;
+        for(int i = 0;i<n;i++){
+            time[i] = float(target-position[i])/speed[i];    // 计算到达目的地需要的时间,注意转一下float
+            mp[position[i]] = time[i];  // 形成位置和时间的映射
+        }
+        sort(position.begin(),position.end());  // 按照距离排序
+        stack<float> stk;
+        for(int i = 0;i<n;i++){     // 单调递增栈，比较的是时间
+            while(!stk.empty()&&mp[position[i]]>=stk.top()){
+                stk.pop();
+            }
+            stk.push(mp[position[i]]);
+        }
+
+        return stk.size();
+    }
+};
+```
+
+**时间复杂度$O(n)$
+
+#### 6、柱状图中最大面积
+
+**思路**
+
+* 理想情况下：高度一直增大的三角块，这样的情况下，假设有n个柱子，最后一个柱子起倒推计算n次面积，取最大值
+
+* 每个面积都是以最后一个柱子为终点，如图返回面积的最大值
+
+* 非理想情况下：如果当前小于栈顶，则将之前的三角块的面积计算
+
+  <img src="C:\Users\xu5375\AppData\Roaming\Typora\typora-user-images\image-20230924200825258.png" alt="image-20230924200825258" style="zoom:68%;" />
+
+```cpp
+class Solution {
+public:
+    int largestRectangleArea(vector<int>& heights) {
+        int res = 0;
+        stack<int> st;
+        heights.insert(heights.begin(),0);  // 使第一个三角块的面积能够被计算
+        heights.push_back(0);   // 使最后一个三角块能被计算面积
+        st.push(0);
+        for(int i = 1;i<heights.size();i++){
+            if(heights[i]>heights[st.top()]){
+                st.push(i);
+            }else{
+                while(!st.empty()&&heights[i]<heights[st.top()]){
+                    int mid = st.top();
+                    st.pop();
+                    if(!st.empty()){
+                        int l = st.top();
+                        int r = i;
+                        int w = r-l-1;
+                        int h = heights[mid];
+                        res = max(res,w*h);
+                    }
+                }
+            }
+            st.push(i);
+        }
+        return res;
+    }
+};
+```
+
 
 
 ### 队列
