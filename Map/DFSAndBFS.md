@@ -568,3 +568,177 @@ public:
 
 ```
 
+#### 最大人工岛
+
+[题目链接](https://leetcode.cn/problems/making-a-large-island/)
+
+* 先对区域进行dfs，将每个岛屿岛上标记
+* 再对区域进行一次搜索，如果当前位置是海洋，则统计其四方的岛屿
+* 将四方的岛屿进行相加，最后返回最大值
+
+```cpp
+class Solution {
+public:
+    int dir[4][2] = {0,1,1,0,-1,0,0,-1};
+    int count;
+    void dfs(vector<vector<int>>& grid,vector<vector<bool>>& vis,int x,int y,int mark){
+        if(vis[x][y]||grid[x][y]==0) return;
+        vis[x][y] = true;
+        grid[x][y] = mark;  // 将当前格子打上标记
+        count++;    // 当前岛屿面积加一
+        for(int i = 0;i<4;i++){
+            int nextx = x+dir[i][0];
+            int nexty = y+dir[i][1];
+            if(nextx<0||nextx>=grid.size()||nexty<0||nexty>=grid[0].size()) continue;
+            dfs(grid,vis,nextx,nexty,mark);
+        }
+    }
+    int largestIsland(vector<vector<int>>& grid) {
+        int n = grid.size(),m = grid[0].size(); // 记录行数和列数
+        vector<vector<bool>> vis = vector<vector<bool>>(n,vector<bool>(m,false)); // 初始化vis数组
+        unordered_map<int ,int> gridNum;    // 用于存储岛屿对应的面积
+        int mark = 2; // 记录每个岛屿的编号
+        bool isAllGrid = true; // 标记是否整个地图都是陆地
+        for(int i = 0;i<n;i++){
+            for(int j = 0;j<m;j++){
+                if(grid[i][j]==0) isAllGrid=false;  // 出现了陆地，说明不是纯陆地
+                if(!vis[i][j]&&grid[i][j]==1){  // 当前格子没有访问并且是陆地
+                    count = 0;  // 用于统计当前岛屿的面积
+                    dfs(grid,vis,i,j,mark); // 进入dfs
+                    gridNum[mark] = count;  // 记下当前岛屿对应的面积
+                    mark++; // 编号++，用于记录下一块岛屿
+                }
+            }
+        }
+
+        if(isAllGrid) return m*n;   
+        // 以下逻辑是根据添加陆地的位置，计算周边岛屿面积之和
+        int result = 0; // 记录最后结果
+        unordered_set<int> visitedGrid; // 标记访问过的岛屿
+        for(int i = 0;i<n;i++){
+            for(int j = 0;j<m;j++){
+                int tmpCount = 1; // 记录连接之后的岛屿数量
+                visitedGrid.clear(); // 每次使用时，清空
+                if (grid[i][j] == 0) {
+                    for (int k = 0; k < 4; k++) {
+                        int neari = i + dir[k][1]; // 计算相邻坐标
+                        int nearj = j + dir[k][0];
+                        if (neari < 0 || neari >= grid.size() || nearj < 0 || nearj >= grid[0].size()) continue;
+                        if (visitedGrid.count(grid[neari][nearj])) continue; // 添加过的岛屿不要重复添加
+                        // 把相邻四面的岛屿数量加起来
+                        tmpCount += gridNum[grid[neari][nearj]];
+                        visitedGrid.insert(grid[neari][nearj]); // 标记该岛屿已经添加过
+                    }
+                }
+                result = max(result, tmpCount);
+            }
+        }
+        return result;
+    }
+};
+```
+
+**时间复杂度$O(n^2)$**
+
+**并查集**
+
+```cpp
+class UnionFind {
+private:
+    vector<int> parent;
+    vector<int> size;   // 用于记录当前岛的大小
+
+public:
+    UnionFind(int n) {
+        parent = vector<int>(n);    // 初始化parent数组
+        size = vector<int>(n, 1);   // 将size初始化为1 
+        for (int i = 0; i < n; i++) {
+            parent[i] = i;
+        }
+    }
+
+    int find(int x) {
+        if (x == parent[x]) {
+            return x;
+        }
+        return parent[x] = find(parent[x]); // 路径压缩 
+    }
+
+    void merge(int x, int y) {  
+        int rootX = find(x);
+        int rootY = find(y);
+        if (rootX != rootY) {
+            parent[rootX] = rootY;
+            size[rootY] += size[rootX];
+        }
+    }
+
+    int getSize(int x) {    // 获取当前岛屿面积
+        return size[find(x)];
+    }
+};
+
+class Solution {
+public:
+    int largestIsland(vector<vector<int>>& grid) {
+        int n = grid.size();
+        UnionFind uf(n * n);
+
+        vector<int> dx = {1, -1, 0, 0};
+        vector<int> dy = {0, 0, 1, -1};
+
+        // 遍历网格，建立并查集
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 1) {
+                    int current = i * n + j;    // 将二位数组索引转换为一维数组
+                    for (int k = 0; k < 4; k++) {
+                        int ni = i + dx[k];
+                        int nj = j + dy[k];
+                        if (ni >= 0 && ni < n && nj >= 0 && nj < n && grid[ni][nj] == 1) {
+                            int neighbor = ni * n + nj;
+                            uf.merge(current, neighbor);
+                        }
+                    }
+                }
+            }
+        }
+
+        int maxIslandSize = 0;  // 用于记录最大的人造岛
+
+        // 遍历网格，查找最大的岛屿
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (grid[i][j] == 0) {  // 当前为海域
+                    int current = i * n + j;
+                    unordered_map<int, int> neighbors;  
+                    for (int k = 0; k < 4; k++) {
+                        int ni = i + dx[k];
+                        int nj = j + dy[k];
+                        if (ni >= 0 && ni < n && nj >= 0 && nj < n && grid[ni][nj] == 1) {
+                            int neighbor = uf.find(ni * n + nj);    // 查找邻居的祖先
+                            neighbors[neighbor] = uf.getSize(neighbor); // 获取邻居的面积
+                        }
+                    }
+                    int newSize = 1;
+                    for (const auto& p : neighbors) {
+                        newSize += p.second; // 统计人造岛的总面积
+                    }
+                    maxIslandSize = max(maxIslandSize, newSize);    // 更新
+                }
+            }
+        }
+
+        if (maxIslandSize == 0) {
+            // 如果没有0存在，返回整个网格的大小
+            maxIslandSize = n * n;
+        }
+
+        return maxIslandSize;
+    }
+};
+
+```
+
+
+
