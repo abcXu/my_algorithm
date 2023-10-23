@@ -740,5 +740,150 @@ public:
 
 ```
 
+#### 被围绕的区域
 
+[题目链接](https://leetcode.cn/problems/surrounded-regions/)
+
+* 在边沿出发，将所有的'O'替换成'A'
+* 将'O'换成X，'A'换成'O'
+* BFS 和DFS均可
+
+```cpp
+class Solution {
+public:
+    int dir[4][2] = {1,0,0,1,-1,0,0,-1};
+    void bfs(vector<vector<char>>& board,int x,int y){
+        queue<pair<int,int>> que;
+        que.push({x,y});
+        board[x][y] = 'A';
+        while(!que.empty()){
+            pair<int,int> cur = que.front();
+            que.pop();
+            int curx = cur.first;
+            int cury = cur.second;
+            for(int i = 0;i<4;i++){
+                int nextx = curx + dir[i][0];
+                int nexty = cury +  dir[i][1];
+                if(nextx<0||nextx>=board.size()||nexty<0||nexty>=board[0].size()) continue;
+                if(board[nextx][nexty]=='A'||board[nextx][nexty]=='X') continue;
+                que.push({nextx,nexty});
+                board[nextx][nexty] = 'A';
+            }
+        }
+    }
+    void dfs(vector<vector<char>>& board,int x,int y){
+        board[x][y] = 'A';
+        for(int i = 0;i<4;i++){
+            int nextx = x+dir[i][0];
+            int nexty = y+dir[i][1];
+
+            if(nextx<0||nextx>=board.size()||nexty<0||nexty>=board[0].size()) continue;
+            if(board[nextx][nexty]=='A'||board[nextx][nexty]=='X') continue;
+            dfs(board,nextx,nexty);
+        }
+
+        return;
+    }
+    void solve(vector<vector<char>>& board) {
+        int  m =   board.size();
+        int  n = board[0].size();
+        // 从左侧边和右侧边向中间遍历
+        for(int i = 0;i<m;i++){
+            if(board[i][0]=='O') bfs(board,i,0);
+            if(board[i][n-1]=='O') bfs(board,i,n-1);
+        }
+        // 从上侧边和下侧边向中间遍历
+        for(int i = 0;i<n;i++){
+            if(board[0][i]=='O') bfs(board,0,i);
+            if(board[m-1][i]=='O') bfs(board,m-1,i);
+        }
+
+        for(int i = 0;i<m;i++){
+            for(int j = 0;j<n;j++){
+                if(board[i][j]=='O') board[i][j]='X';
+                if(board[i][j]=='A') board[i][j]='O';
+                
+            }
+        }
+
+    }
+};
+```
+
+#### 太平洋大西洋水流问题
+
+**不要从陆地出发，会超时**
+
+**原因：**遍历每一个节点，是 m * n，遍历每一个节点的时候，都要做深搜，深搜的时间复杂度是： m * n
+
+那么整体时间复杂度 就是 O(m^2 * n^2) ，这是一个四次方的时间复杂度。
+
+```cpp
+class Solution {
+public:
+    int  dir[4][2] = {0,1,1,0,-1,0,0,-1};
+    void dfs(vector<vector<int>>& heights,vector<vector<bool>>&  vis,int x,int y){
+        vis[x][y] = true;
+        for(int i = 0;i<4;i++){
+            int nextx = x+dir[i][0];
+            int nexty = y+dir[i][1];
+            if(nextx<0||nextx>=heights.size()||nexty<0||nexty>=heights[0].size()) continue;
+            if(heights[x][y]>heights[nextx][nexty]) continue;
+            if(!vis[nextx][nexty])
+                dfs(heights,vis,nextx,nexty);
+            
+               
+        }
+        return;
+    }
+    void bfs(vector<vector<int>>& heights,vector<vector<bool>>& vis,int x,int y){
+       
+        queue<pair<int,int>> que;
+        que.push({x,y});
+         vis[x][y] = true;
+        while(!que.empty()){
+            pair<int,int> cur = que.front();
+            que.pop();
+            int curx = cur.first;
+            int cury = cur.second;
+            for(int k = 0;k<4;k++){
+                int nextx = curx + dir[k][0];
+                int nexty = cury + dir[k][1];
+                if(nextx<0||nextx>=heights.size()||nexty<0||nexty>=heights[0].size()) continue;
+                if(heights[curx][cury]>heights[nextx][nexty]) continue;
+                if(!vis[nextx][nexty]){
+                    que.push({nextx,nexty});
+                    vis[nextx][nexty] = true;
+                }
+            }
+        }
+        return;
+    }
+    vector<vector<int>> pacificAtlantic(vector<vector<int>>& heights) {
+        vector<vector<int>> res;
+
+        int m = heights.size(),n = heights[0].size();
+        // 记录从太平洋边出发，可以遍历的节点
+        vector<vector<bool>> pacific = vector<vector<bool>>(m, vector<bool>(n, false));
+
+        // 记录从大西洋出发，可以遍历的节点
+        vector<vector<bool>> atlantic = vector<vector<bool>>(m, vector<bool>(n, false));
+        for(int i = 0;i<m;i++){
+            bfs(heights,pacific,i,0);
+            bfs(heights,atlantic,i,n-1);
+        }
+        for(int j = 0;j<n;j++){
+            bfs(heights,pacific,0,j);
+            bfs(heights,atlantic,m-1,j);
+        }
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                // 如果这个节点，从太平洋和大西洋出发都遍历过，就是结果
+                if (pacific[i][j] && atlantic[i][j]) res.push_back({i, j});
+            }
+        }
+        return res;
+    }
+};
+```
 
