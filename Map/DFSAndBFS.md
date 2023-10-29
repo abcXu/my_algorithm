@@ -887,3 +887,33 @@ public:
 };
 ```
 
+#### 钥匙和房间
+
+[题目地址](https://leetcode.cn/problems/keys-and-rooms/description/)
+
+* 有向图的搜索
+
+```cpp
+class Solution {
+public:
+    void dfs(vector<vector<int>>& rooms,int key, vector<bool>& visiited){
+        if(visiited[key]) return;
+
+        visiited[key] = true;
+        vector<int> keys = rooms[key];
+        for(int key:keys){
+            dfs(rooms,key,visiited);
+        }
+    }
+    bool canVisitAllRooms(vector<vector<int>>& rooms) {
+        vector<bool> visiited(rooms.size(),false);
+        dfs(rooms,0,visiited);
+
+        for(int i = 0;i<rooms.size();i++){
+            if(visiited[i]==false) return false;
+        }
+
+        return true;
+    }
+};
+```
