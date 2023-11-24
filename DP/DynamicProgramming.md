@@ -85,7 +85,7 @@ public:
 
 * 因为，你可以选择从下标为 0 或下标为 1 的台阶开始爬楼梯
 
-```
+```c++
 class Solution {
 public:
     int minCostClimbingStairs(vector<int>& cost) {
@@ -164,5 +164,72 @@ public:
 };
 ```
 
+#### 背包问题
 
+![416.分割等和子集1](https://code-thinking-1253855093.file.myqcloud.com/pics/20210117171307407.png)
+
+##### 0-1背包问题
+
+* 即$dp[i][j]$ 表示从下标为[0-i]的物品里任意取，放进容量为j的背包，价值总和最大是多少。
+* 
+
+```cpp
+#include<iostream>
+#include<algorithm>
+using namespace std;
+const int MAXN = 1005;
+int v[MAXN];    // 体积
+int w[MAXN];    // 价值 
+int dp[MAXN][MAXN];  // f[i][j], j体积下前i个物品的最大价值 
+int main(){
+    int n, m;   
+    cin >> n >> m;
+    for(int i = 1; i <= n; i++) 
+        cin >> v[i] >> w[i];
+	// 考虑某个物品被装进背包先要看是否背包装得下，此外还要看是否要装
+    for(int i = 1; i <= n; i++) 
+        for(int j = 1; j <= m; j++)
+        {
+            //  当前背包容量装不进第i个物品，则价值等于前i-1个物品
+            if(j < v[i]) 
+                dp[i][j] = dp[i - 1][j];
+            // 能装，需进行决策是否选择第i个物品
+            else    
+                dp[i][j] = max(dp[i - 1][j], dp[i - 1][j - v[i]] + w[i]);
+        }           
+
+    cout << dp[n][m] << endl;
+
+    return 0;
+}
+```
+
+#### 划分等和子集
+
+```cpp
+class Solution {
+public:
+    bool canPartition(vector<int>& nums) {
+        int sum =0;
+        // 计算总和
+        vector<int> dp(10001,0);
+        for(int i = 0;i<nums.size();i++){
+            sum+=nums[i];
+        }
+		// 总和是奇数，直接返货false
+        if(sum%2==1) return false;
+        int target = sum/2;
+		// 转换为0-1背包问题
+        for(int i =0; i<nums.size();i++){
+            for(int j =target;j>=nums[i];j--){
+                dp[j] = max(dp[j],dp[j-nums[i]]+nums[i]);
+            }
+        } 
+
+        if(target==dp[target]) return true;
+
+        return false;
+    }
+};
+```
 
